@@ -1,5 +1,12 @@
 package main
 
+/*
+This code is my learning of Golang.
+
+see also bellow blog.
+http://archive.miek.nl/blog/archives/2012/12/07/printing_mx_records_with_go_dns_take_3/index.html
+*/
+
 import (
 	"github.com/miekg/dns"
 	"fmt"
