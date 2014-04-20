@@ -20,8 +20,10 @@ func main() {
 	config, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
 	c := new(dns.Client)
 	m := new(dns.Msg)
-	m.SetQuestion(*domain, dns.TypeSOA)
 	m.RecursionDesired = true
+
+	m.SetQuestion(*domain, dns.TypeA)
+
 	r, _, err := c.Exchange(m, config.Servers[0]+":"+config.Port)
 	if err != nil {
 		return
@@ -30,8 +32,25 @@ func main() {
 		return
 	}
 	for _, a := range r.Answer {
-		if soa, ok := a.(*dns.SOA); ok {
-			fmt.Printf("%s\n", soa.String())
+		if res, ok := a.(*dns.A); ok {
+			fmt.Printf("%s\n", res.String())
 		}
+
 	}
+
+	m.SetQuestion(*domain, dns.TypeAAAA)
+	r, _, err = c.Exchange(m, config.Servers[0]+":"+config.Port)
+	if err != nil {
+		return
+	}
+	if r.Rcode != dns.RcodeSuccess {
+		return
+	}
+	for _, a := range r.Answer {
+		if res, ok := a.(*dns.AAAA); ok {
+			fmt.Printf("%s\n", res.String())
+		}
+
+	}
+
 }
