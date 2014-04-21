@@ -13,6 +13,33 @@ import (
 	"flag"
 )
 
+
+func Query(msg *dns.Msg, t uint16, c *dns.Client, server string, domain *string) {
+	msg.SetQuestion(*domain, t)
+
+	r, _, err := c.Exchange(msg, server)
+	if err != nil {
+		return
+	}
+	if r.Rcode != dns.RcodeSuccess {
+		return
+	}
+	
+	for _, a := range r.Answer {
+		if (t == 1) {
+			if res, ok := a.(*dns.A); ok {
+				fmt.Printf("%s\n", res.String())
+			}
+		} else if (t == 28) {
+			if res, ok := a.(*dns.AAAA); ok {
+				fmt.Printf("%s\n", res.String())
+			}
+		}
+	}
+
+}
+
+
 func main() {
 	var domain = flag.String("d", "example.org.", "specify domain name (example.org.)")
 	flag.Parse()
@@ -21,36 +48,9 @@ func main() {
 	c := new(dns.Client)
 	m := new(dns.Msg)
 	m.RecursionDesired = true
+	server := config.Servers[0]+":"+config.Port
 
-	m.SetQuestion(*domain, dns.TypeA)
-
-	r, _, err := c.Exchange(m, config.Servers[0]+":"+config.Port)
-	if err != nil {
-		return
-	}
-	if r.Rcode != dns.RcodeSuccess {
-		return
-	}
-	for _, a := range r.Answer {
-		if res, ok := a.(*dns.A); ok {
-			fmt.Printf("%s\n", res.String())
-		}
-
-	}
-
-	m.SetQuestion(*domain, dns.TypeAAAA)
-	r, _, err = c.Exchange(m, config.Servers[0]+":"+config.Port)
-	if err != nil {
-		return
-	}
-	if r.Rcode != dns.RcodeSuccess {
-		return
-	}
-	for _, a := range r.Answer {
-		if res, ok := a.(*dns.AAAA); ok {
-			fmt.Printf("%s\n", res.String())
-		}
-
-	}
+	Query(m, dns.TypeA, c, server, domain)
+	Query(m, dns.TypeAAAA, c, server, domain)
 
 }
