@@ -13,28 +13,19 @@ import (
 	"flag"
 )
 
+func Query(msg *dns.Msg, recordType uint16, client *dns.Client, server string, domain *string) {
+	msg.SetQuestion(*domain, recordType)
 
-func Query(msg *dns.Msg, t uint16, c *dns.Client, server string, domain *string) {
-	msg.SetQuestion(*domain, t)
-
-	r, _, err := c.Exchange(msg, server)
+	r, _, err := client.Exchange(msg, server)
 	if err != nil {
 		return
 	}
 	if r.Rcode != dns.RcodeSuccess {
 		return
 	}
-	
+
 	for _, a := range r.Answer {
-		if (t == 1) {
-			if res, ok := a.(*dns.A); ok {
-				fmt.Printf("%s\n", res.String())
-			}
-		} else if (t == 28) {
-			if res, ok := a.(*dns.AAAA); ok {
-				fmt.Printf("%s\n", res.String())
-			}
-		}
+		fmt.Printf("%s\n", a.String())
 	}
 
 }
@@ -45,12 +36,11 @@ func main() {
 	flag.Parse()
 
 	config, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
-	c := new(dns.Client)
-	m := new(dns.Msg)
-	m.RecursionDesired = true
+	client := new(dns.Client)
+	msg := new(dns.Msg)
+	msg.RecursionDesired = true
 	server := config.Servers[0]+":"+config.Port
 
-	Query(m, dns.TypeA, c, server, domain)
-	Query(m, dns.TypeAAAA, c, server, domain)
-
+	Query(msg, dns.TypeA, client, server, domain)
+	Query(msg, dns.TypeAAAA, client, server, domain)
 }
