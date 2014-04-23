@@ -8,13 +8,14 @@ http://archive.miek.nl/blog/archives/2012/12/07/printing_mx_records_with_go_dns_
 */
 
 import (
-	"github.com/miekg/dns"
 	"fmt"
 	"flag"
+	"errors"
+	"github.com/miekg/dns"
 )
 
-func Query(msg *dns.Msg, recordType uint16, client *dns.Client, server string, domain *string) {
-	msg.SetQuestion(*domain, recordType)
+func Query(msg *dns.Msg, recordType uint16, client *dns.Client, server string, domain string) {
+	msg.SetQuestion(domain, recordType)
 
 	r, _, err := client.Exchange(msg, server)
 	if err != nil {
@@ -32,8 +33,14 @@ func Query(msg *dns.Msg, recordType uint16, client *dns.Client, server string, d
 
 
 func main() {
-	var domain = flag.String("d", "example.org.", "specify domain name (example.org.)")
 	flag.Parse()
+	if flag.NArg() != 1 {
+		err := errors.New("FQDN not specified.")
+		fmt.Println(err)
+		return
+	}
+
+	domain := flag.Args()[0]
 
 	config, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
 	client := new(dns.Client)
